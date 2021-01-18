@@ -7,7 +7,7 @@ class Stack:
         self.size: int = 0
         self.top = None
 
-    def push(self, item) -> None:
+    def push(self, item: int) -> None:
         new = Node(item)
         if self.size == 0:
             self.top = new
@@ -38,7 +38,7 @@ class Stack:
 
 
 class Node:
-    def __init__(self, item: Any):
+    def __init__(self, item: int):
         self.__next = None
         self.__item: Any = item
 
