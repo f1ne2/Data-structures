@@ -20,12 +20,9 @@ class Stack:
         self.size += 1
 
     def pop(self) -> Generic[T]:
-        try:
-            if self.size == 0:
-                raise IndexError
-        except:
+        if self.size == 0:
             print("Stack is empty")
-            sys.exit()
+            raise IndexError
         temporary = self.top
         returning = self.top.item
         self.top = self.top.next
