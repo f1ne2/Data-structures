@@ -6,9 +6,10 @@ class Node:
         self.__left = None
         self.__right = None
         self.__item = item
+        self.__height = 1
 
     @property
-    def right(self):
+    def right(self) -> Node:
         return self.__right
 
     @right.setter
@@ -16,7 +17,7 @@ class Node:
         self.__right = node
 
     @property
-    def left(self):
+    def left(self) -> Node:
         return self.__left
 
     @left.setter
@@ -28,8 +29,16 @@ class Node:
         return self.__item
 
     @item.setter
-    def item(self, temp: int) -> None:
-        self.__item = temp
+    def item(self, current: int) -> None:
+        self.__item = current
+
+    @property
+    def height(self) -> int:
+        return self.__height
+
+    @height.setter
+    def height(self, current: int) -> None:
+        self.__height = current
 
 
 class Tree:
@@ -37,57 +46,50 @@ class Tree:
         self.size = 0
         self.root = None
 
-    def add(self, item: int):
+    def add(self, item: int) -> None:
         if self.size == 0:
             self.root = Node(item)
         else:
             self.add_to(self.root, item)
         self.size += 1
 
-    def add_to(self, node: Node, item: int):
-        if item > node.item:
-            if not node.right:
-                node.right = Node(item)
-            else:
-                self.add_to(node.right, item)
-        elif item < node.item:
-            if not node.left:
-                node.left = Node(item)
-            else:
-                self.add_to(node.left, item)
-        return
+    def add_to(self, node: Node, item: int) -> None:
+        if item > node.item and not node.right:
+            node.right = Node(item)
+        elif item > node.item and node.right:
+            self.add_to(node.right, item)
+        elif item < node.item and not node.left:
+            node.left = Node(item)
+        elif item < node.item and node.left:
+            self.add_to(node.left, item)
+        self.balance(node)
 
-    def tree_contains(self, current: Node):
+    def tree_contains(self, current: Node, array: list) -> list:
         if self.size == 0:
-            print("Tree is Empty")
-            return
-        print(current.item, end=" ")
+            return array
+        array.append(current)
         if current.right:
-            self.tree_contains(current.right)
+            self.tree_contains(current.right, array)
         if current.left:
-            self.tree_contains(current.left)
-        return
+            self.tree_contains(current.left, array)
+        return array
 
-    def remove(self, item: int):
+    def remove(self, item: int) -> None:
         if self.size == 0:
-            print("Tree is Empty")
             return
         self.remove_to(None, self.root, item)
         self.size -= 1
 
-    def remove_to(self, parent: None or Node, current: Node, item: int):
-        try:
-            if current.item == item:
-                self.delete(parent, current)
-        except AttributeError:
-            print("This element don't exist")
+    def remove_to(self, parent: None or Node, current: Node, item: int) -> None:
+        if current.item == item:
+            self.delete(parent, current)
             return
         if current.item < item:
             self.remove_to(current, current.right, item)
         if current.item > item:
             self.remove_to(current, current.left, item)
 
-    def delete(self, parent: Node, current: Node):
+    def delete(self, parent: Node, current: Node) -> None:
         if not parent:
             if not current.right:
                 self.root = current.left
@@ -96,7 +98,7 @@ class Tree:
             else:
                 self.root = current.right
                 self.left_most(current.right).left = current.left
-        elif self.compare_to(parent, current) > 0:
+        elif parent.item > current.item:
             if not current.right and not current.left:
                 parent.left = None
                 del current
@@ -136,15 +138,7 @@ class Tree:
             else:
                 return current
 
-    def compare_to(self, parent: Node, current: Node) -> int:
-        if parent.item > current.item:
-            return 1
-        elif parent.item < current.item:
-            return -1
-        elif parent.item == current.item:
-            return 0
-
-    def clear(self, current: Node):
+    def clear(self, current: Node) -> None:
         if current.right:
             self.clear(current.right)
         if current.left:
@@ -153,4 +147,53 @@ class Tree:
         current.left = None
         del current
         self.size = 0
-        return
+
+    def fixheight(self, current: Node) -> None:
+        hl = self.height(current.left)
+        hr = self.height(current.right)
+        if hl > hr:
+            current.height = hl+1
+        else:
+            current.height = hr+1
+
+    def height(self, node: Node or None) -> int:
+        if node is None:
+            return 0
+        else:
+            l_height = self.height(node.left)
+            r_height = self.height(node.right)
+            if l_height > r_height:
+                return l_height+1
+            else:
+                return r_height+1
+
+    def b_factor(self, node: Node):
+        return self.height(node.right) - self.height(node.left)
+
+    def rotate_right(self, parent: Node) -> Node:
+        current = parent.left
+        parent.left = current.right
+        current.right = parent
+        self.fixheight(parent)
+        self.fixheight(current)
+        return current
+
+    def rotate_left(self, parent: Node) -> Node:
+        current = parent.right
+        parent.right = parent.left
+        current.left = parent
+        self.fixheight(parent)
+        self.fixheight(current)
+        return current
+
+    def balance(self, node: Node) -> Node:
+        self.fixheight(node)
+        if self.b_factor(node) == 2:
+            if self.b_factor(node.right) < 0:
+                node.right = self.rotate_right(node.right)
+            return self.rotate_left(node)
+        if self.b_factor(node) == -2:
+            if self.b_factor(node.left) > 0:
+                node.left = self.rotate_left(node.left)
+            return self.rotate_right(node)
+        return node
