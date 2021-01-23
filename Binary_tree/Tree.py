@@ -46,23 +46,26 @@ class Tree:
         self.size = 0
         self.root = None
 
+    def __eq__(self, other: Node):
+        return self.root.item == other.item
+
     def add(self, item: int) -> None:
         if self.size == 0:
             self.root = Node(item)
         else:
-            self.add_to(self.root, item)
+            self.root = self.add_to(self.root, item)
         self.size += 1
 
-    def add_to(self, node: Node, item: int) -> None:
+    def add_to(self, node: Node, item: int) -> Node:
         if item > node.item and not node.right:
             node.right = Node(item)
         elif item > node.item and node.right:
-            self.add_to(node.right, item)
+            node.right = self.add_to(node.right, item)
         elif item < node.item and not node.left:
             node.left = Node(item)
         elif item < node.item and node.left:
-            self.add_to(node.left, item)
-        self.balance(node)
+            node.left = self.add_to(node.left, item)
+        return self.balance(node)
 
     def tree_contains(self, current: Node, array: list) -> list:
         if self.size == 0:
@@ -83,11 +86,18 @@ class Tree:
     def remove_to(self, parent: None or Node, current: Node, item: int) -> None:
         if current.item == item:
             self.delete(parent, current)
-            return
+            self.root = self.balancing(self.root)
         if current.item < item:
             self.remove_to(current, current.right, item)
         if current.item > item:
             self.remove_to(current, current.left, item)
+
+    def balancing(self, node: Node) -> Node:
+        if node.right:
+            node.right = self.balancing(node.right)
+        if node.left:
+            node.left = self.balancing(node.left)
+        return self.balance(node)
 
     def delete(self, parent: Node, current: Node) -> None:
         if not parent:
@@ -148,7 +158,7 @@ class Tree:
         del current
         self.size = 0
 
-    def fixheight(self, current: Node) -> None:
+    def fix_height(self, current: Node) -> None:
         hl = self.height(current.left)
         hr = self.height(current.right)
         if hl > hr:
@@ -174,20 +184,20 @@ class Tree:
         current = parent.left
         parent.left = current.right
         current.right = parent
-        self.fixheight(parent)
-        self.fixheight(current)
+        self.fix_height(parent)
+        self.fix_height(current)
         return current
 
     def rotate_left(self, parent: Node) -> Node:
         current = parent.right
-        parent.right = parent.left
+        parent.right = current.left
         current.left = parent
-        self.fixheight(parent)
-        self.fixheight(current)
+        self.fix_height(parent)
+        self.fix_height(current)
         return current
 
     def balance(self, node: Node) -> Node:
-        self.fixheight(node)
+        self.fix_height(node)
         if self.b_factor(node) == 2:
             if self.b_factor(node.right) < 0:
                 node.right = self.rotate_right(node.right)
